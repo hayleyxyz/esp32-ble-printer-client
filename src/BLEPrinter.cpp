@@ -1,5 +1,6 @@
 #include "BLEPrinter.h"
 #include "PrinterPacket.h"
+#include "PrinterCommand.h"
 
 BLEPrinter::BLEPrinter(BLEClient* client) :
     printerServiceUUID(BLEUUID((uint16_t)0xae30)),
@@ -18,17 +19,14 @@ bool BLEPrinter::enableNotifications()
     return true;
 }
 
-bool BLEPrinter::requestStatus()
+void BLEPrinter::requestStatus()
 {
     uint8_t statusType = 0x01;
-    uint8_t data[9];
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(statusType))];
 
-    PrinterPacket::makePacketUInt8(CommandStatus, statusType, data, sizeof(data));
+    PrinterPacket::makePacketUInt8(PrinterCommand::Status, statusType, data, sizeof(data));
 
-    this->getWriteCharacteristic()
-        ->writeValue(data, sizeof(data), false);
-
-    return true;
+    this->write(data, sizeof(data));
 }
 
 BLERemoteCharacteristic* BLEPrinter::getNotifyCharacteristic()
@@ -60,7 +58,7 @@ void BLEPrinter::notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristi
 
     Serial.println();
 
-    if (data[2] == CommandStatus) {
+    if (data[2] == PrinterCommand::Status) {
         Serial.println("Status response");
 
         auto status = data[6];
@@ -126,7 +124,48 @@ String BLEPrinter::getStatusString()
 
 void BLEPrinter::setHeat(uint8_t heat)
 {
-    uint8_t data[PrinterPacket::getPacketLength(sizeof(heat))];
-    PrinterPacket::makePacketUInt8(CommandSetHeat, heat, data, sizeof(data));
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(heat))];
+    PrinterPacket::makePacketUInt8(PrinterCommand::SetHeat, heat, data, sizeof(data));
     this->write(data, sizeof(data));
+}
+
+void BLEPrinter::setEnergy(uint16_t energy)
+{
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(energy))];
+    uint16_t energyBE = __builtin_bswap16(energy);
+    PrinterPacket::makePacket(PrinterCommand::SetEnergy, reinterpret_cast<uint8_t*>(&energyBE), sizeof(energyBE), data, sizeof(data));
+
+    printf("Set energy: %02x%02x\n", (reinterpret_cast<uint8_t*>(&energyBE))[0], (reinterpret_cast<uint8_t*>(&energyBE))[1]);
+
+    this->write(data, sizeof(data));
+}
+
+void BLEPrinter::setPaperFeedSpeed(uint8_t speed)
+{
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(speed))];
+    PrinterPacket::makePacketUInt8(PrinterCommand::PaperFeedSpeed, speed, data, sizeof(data));
+    this->write(data, sizeof(data));
+}
+
+void BLEPrinter::setDraft(bool enabled)
+{
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(enabled))];
+    PrinterPacket::makePacketUInt8(PrinterCommand::Draft, enabled ? 0x01 : 0x00, data, sizeof(data));
+    this->write(data, sizeof(data));
+}
+
+void BLEPrinter::printData(uint8_t* data, size_t length)
+{
+    uint8_t packet[PrinterPacket::calculatePacketLength(length)];
+    PrinterPacket::makePacket(PrinterCommand::PrintData, data, length, packet, sizeof(packet));
+    this->write(packet, sizeof(packet));
+}
+
+void BLEPrinter::getDeviceInfo()
+{
+    uint8_t data[PrinterPacket::calculatePacketLength(0)];
+    PrinterPacket::makePacket(PrinterCommand::GetDeviceInfo, nullptr, 0, data, sizeof(data));
+    this->write(data, sizeof(data));
+
+
 }

@@ -11,7 +11,7 @@ class BLEPrinter
     BLEPrinter(BLEClient* client);
 
     bool enableNotifications();
-    bool requestStatus();
+    void requestStatus();
     
     BLEPrinterStatus getStatus() { return this->status; }
     String getName();
@@ -19,8 +19,11 @@ class BLEPrinter
 
     void write(uint8_t* data, size_t length);
     void setHeat(uint8_t heat);
-
-    
+    void setEnergy(uint16_t energy);
+    void setPaperFeedSpeed(uint8_t speed);
+    void setDraft(bool draft);
+    void printData(uint8_t* data, size_t length);
+    void getDeviceInfo();
 
 private:
     BLEClient* client;
@@ -31,13 +34,7 @@ private:
     const BLEUUID notifyCharacteristicUUID;
     const BLEUUID genericAccessServiceUUID;
 
-    const uint8_t CommandOnOff = 0x52;
-    const uint8_t CommandStatus = 0xA3;
-    const uint8_t CommandSetHeat = 0xA4;
-    const u_int8_t CommandSetEnergy = 0xAF;
-
     BLERemoteCharacteristic* getNotifyCharacteristic();
-
     BLERemoteCharacteristic* getWriteCharacteristic();
 
     void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* data, size_t length, bool isNotify);

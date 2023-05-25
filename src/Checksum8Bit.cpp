@@ -1,6 +1,7 @@
 #include "Checksum8Bit.h"
 
-const uint8_t Checksum8Bit::crc_table[256] = {
+#if !defined(CHECKSUM8BIT_GENERATE_TABLE) || defined(CHECKSUM8BIT_STATIC_TABLE)
+const uint8_t crc_table[256] = {
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31,
     0x24, 0x23, 0x2a, 0x2d, 0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65,
     0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d, 0xe0, 0xe7, 0xee, 0xe9,
@@ -24,12 +25,18 @@ const uint8_t Checksum8Bit::crc_table[256] = {
     0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef,
     0xfa, 0xfd, 0xf4, 0xf3
 };
+#endif
 
-uint8_t Checksum8Bit::calculate(uint8_t* data, size_t length)
+uint8_t Checksum8Bit::calculate(uint8_t* data, size_t length, uint8_t checksum)
 {
-    uint8_t checksum = 0;
-    for (size_t i = 0; i < length; i++)
-    {
+#if defined(CHECKSUM8BIT_GENERATE_TABLE) || !defined(CHECKSUM8BIT_STATIC_TABLE)
+    if (crc_table == nullptr) {
+        crc_table = new uint8_t[256];
+        generate_table(crc_table);
+    }
+#endif
+
+    for (size_t i = 0; i < length; i++) {
         checksum = crc_table[(checksum ^ data[i]) & 0xff];
     }
 
