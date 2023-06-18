@@ -24,10 +24,14 @@ class BLEPrinter
     void setDraft(bool draft);
     void printData(uint8_t* data, size_t length);
     void getDeviceInfo();
+    void setPaperDPI(uint16_t dpi);
 
 private:
     BLEClient* client;
     BLEPrinterStatus status = BLEPrinterStatus::Unknown;
+
+    const u_int8_t printLattice[11] = { 0xaa, 0x55, 0x17, 0x38, 0x44, 0x5f, 0x5f, 0x5f, 0x44, 0x38, 0x2c };
+    const u_int8_t finishLattice[11] = { 0xaa, 0x55, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17 };
 
     const BLEUUID printerServiceUUID;
     const BLEUUID writeCharacteristicUUID;

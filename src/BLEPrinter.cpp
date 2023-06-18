@@ -132,10 +132,9 @@ void BLEPrinter::setHeat(uint8_t heat)
 void BLEPrinter::setEnergy(uint16_t energy)
 {
     uint8_t data[PrinterPacket::calculatePacketLength(sizeof(energy))];
-    uint16_t energyBE = __builtin_bswap16(energy);
-    PrinterPacket::makePacket(PrinterCommand::SetEnergy, reinterpret_cast<uint8_t*>(&energyBE), sizeof(energyBE), data, sizeof(data));
+    PrinterPacket::makePacket(PrinterCommand::SetEnergy, reinterpret_cast<uint8_t*>(&energy), sizeof(energy), data, sizeof(data));
 
-    printf("Set energy: %02x%02x\n", (reinterpret_cast<uint8_t*>(&energyBE))[0], (reinterpret_cast<uint8_t*>(&energyBE))[1]);
+    printf("Set energy: %02x%02x\n", data[sizeof(PacketHeader) + 0], data[sizeof(PacketHeader) + 1]);
 
     this->write(data, sizeof(data));
 }
@@ -166,6 +165,11 @@ void BLEPrinter::getDeviceInfo()
     uint8_t data[PrinterPacket::calculatePacketLength(0)];
     PrinterPacket::makePacket(PrinterCommand::GetDeviceInfo, nullptr, 0, data, sizeof(data));
     this->write(data, sizeof(data));
+}
 
-
+void BLEPrinter::setPaperDPI(uint16_t dpi)
+{
+    uint8_t data[PrinterPacket::calculatePacketLength(sizeof(dpi))];
+    PrinterPacket::makePacket(PrinterCommand::SetPaperDPI, reinterpret_cast<uint8_t*>(&dpi), sizeof(dpi), data, sizeof(data));
+    this->write(data, sizeof(data));
 }
