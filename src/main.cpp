@@ -188,12 +188,7 @@ void loop()
                 bclient->disconnect();
             }
             else if (command == "print") {
-                printer->write("Hello World!");
                 
-
-                
-
-
             }
 
             break;
