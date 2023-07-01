@@ -66,7 +66,7 @@ void setup()
 
     BLEDevice::init("ESP32");
     bclient = BLEDevice::createClient();
-    bclient->setMTU(512);
+    bclient->setMTU(59);
     bclient->setClientCallbacks(new ApplicationClientCallbacks());
 }
 
@@ -188,77 +188,11 @@ void loop()
                 bclient->disconnect();
             }
             else if (command == "print") {
-                printer->getDeviceInfo();
-                printer->requestStatus();
+                printer->write("Hello World!");
                 
-                //Command: (f2) Unknown | 01 82 
-                uint8_t unkData[2] = {0x01, 0x82};
-                uint8_t unkPacketData[PrinterPacket::calculatePacketLength(sizeof(unkData))];
-                PrinterPacket::makePacket(0xf2, unkData, sizeof(unkData), unkPacketData, sizeof(unkPacketData));
-                printer->write(unkPacketData, sizeof(unkPacketData));
+
                 
-                printer->requestStatus();
 
-                // Command: (a4) SetHeat | 34
-                printer->setHeat(0x34);
-
-                //Command: (a6) PrintStartStop | aa 55 17 38 44 5f 5f 5f 44 38 2c 
-                uint8_t printStartData[] = {0xaa, 0x55, 0x17, 0x38, 0x44, 0x5f, 0x5f, 0x5f, 0x44, 0x38, 0x2c};
-                uint8_t packetprintStartData[PrinterPacket::calculatePacketLength(sizeof(printStartData))];
-                PrinterPacket::makePacket(0xa6, printStartData, sizeof(printStartData), packetprintStartData, sizeof(packetprintStartData));
-                printer->write(packetprintStartData, sizeof(packetprintStartData));
-
-                //Command: (af) SetEnergy | 98 3a
-                printer->setEnergy(0x3a98);
-
-                printer->setPaperDPI(0x0030);
-
-                // Command: (be) Draft | 00
-                printer->setDraft(0);
-
-                //Command: (bd) PaperFeedSpeed | 0a
-                printer->setPaperFeedSpeed(0x0a);
-
-                uint8_t* printData = new uint8_t[0x30];
-                uint8_t printDataPacket[PrinterPacket::calculatePacketLength(0x30)];
-
-                for (size_t i = 0; i < 30; i++)
-                {
-                    memset(printData, 0x1c, 0x30);
-
-                    switch (i)
-                    {
-                        case 21:
-                            for (size_t i = 0; i < 16; i++) printData[i] = 0x1c;
-                            break;
-                        case 22:
-                            for (size_t i = 0; i < 16; i++) printData[i] = 0x3e;
-                            break;
-                        case 23:
-                            for (size_t i = 0; i < 16; i++) printData[i] = 0x3e;
-                            break;
-                        case 24:
-                            for (size_t i = 0; i < 16; i++) printData[i] = 0xce;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    PrinterPacket::makePacket(0xa2, printData, 0x30, printDataPacket, sizeof(printDataPacket));
-                    printer->write(printDataPacket, sizeof(printDataPacket));
-                    
-                }
-
-                delete[] printData;
-
-                // Command: (bd) PaperFeedSpeed | 19
-                printer->setPaperFeedSpeed(0x19);
-
-                //Command: (a6) PrintStartStop | aa 55 17 00 00 00 00 00 00 00 17  
-                uint8_t printStopData[] = {0xaa, 0x55, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17};
-                uint8_t packetprintStopData[PrinterPacket::calculatePacketLength(sizeof(printStopData))];
-                PrinterPacket::makePacket(0xa6, printStopData, sizeof(printStopData), packetprintStopData, sizeof(packetprintStopData));
-                printer->write(packetprintStopData, sizeof(packetprintStopData));
 
             }
 

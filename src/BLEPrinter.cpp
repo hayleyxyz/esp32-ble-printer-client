@@ -7,7 +7,8 @@ BLEPrinter::BLEPrinter(BLEClient* client) :
     writeCharacteristicUUID(BLEUUID((uint16_t)0xae01)),
     notifyCharacteristicUUID(BLEUUID((uint16_t)0xae02)),
     genericAccessServiceUUID(BLEUUID((uint16_t)0x1800)),
-    client(client)
+    client(client),
+    parser(new StreamingPacketParser())
 {
 }
 
@@ -88,6 +89,20 @@ void BLEPrinter::write(uint8_t* data, size_t length)
 {
     this->getWriteCharacteristic()
         ->writeValue(data, length, false);
+
+    esp_err_t errRc = ::esp_ble_gattc_write_char(
+		this->client->getGattcIf(),
+		this->client->getConnId(),
+		this->getWriteCharacteristic()->getHandle(),
+		length,
+		data,
+		ESP_GATT_WRITE_TYPE_NO_RSP,
+        static_cast<esp_gatt_auth_req_t>(0)
+	);
+
+    printf("write: %d\n", errRc);
+
+    this->parser->parse(data, length);
 }
 
 String BLEPrinter::getName()
@@ -133,6 +148,10 @@ void BLEPrinter::setEnergy(uint16_t energy)
 {
     uint8_t data[PrinterPacket::calculatePacketLength(sizeof(energy))];
     PrinterPacket::makePacket(PrinterCommand::SetEnergy, reinterpret_cast<uint8_t*>(&energy), sizeof(energy), data, sizeof(data));
+
+    // assert packet data = e0 2e
+    assert(data[sizeof(PacketHeader) + 0] == 0xe0);
+    assert(data[sizeof(PacketHeader) + 1] == 0x2e);
 
     printf("Set energy: %02x%02x\n", data[sizeof(PacketHeader) + 0], data[sizeof(PacketHeader) + 1]);
 

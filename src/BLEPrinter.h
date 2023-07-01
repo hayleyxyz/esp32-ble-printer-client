@@ -4,6 +4,7 @@
 #include <BLEDevice.h>
 
 #include "BLEPrinterStatus.h"
+#include <StreamingPacketParser.h>
 
 class BLEPrinter
 {
@@ -25,6 +26,8 @@ class BLEPrinter
     void printData(uint8_t* data, size_t length);
     void getDeviceInfo();
     void setPaperDPI(uint16_t dpi);
+
+    StreamingPacketParser* parser;
 
 private:
     BLEClient* client;
